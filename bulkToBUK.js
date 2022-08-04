@@ -1,37 +1,43 @@
 const Airtable = require('airtable');
-const base = new Airtable({apiKey: process.env.API_KEY_AIRTABLE}).base(process.env.API_BASE_SALARY);
+const base = new Airtable({ apiKey: process.env.API_KEY_AIRTABLE }).base(process.env.API_BASE_SALARY);
 require('dotenv').config();
 
 const table = base('Data BUK PE');
 const parametros = base('Parameters');
 
 class bulkToBuk {
-    async createRecord(fields) 
-    {
-        const createRecord = table.create(fields, 
-            function(err,records){
-                if(err)
-                console.error(err);
+
+    /**
+     * 
+     * @param {*} fields 
+     */
+    async createRecord(fields) {
+        const createRecord = table.create(fields,
+            function (err, records) {
+                if (err)
+                    console.error(err);
                 return;
             });
     };
 
-    async getRecord(_id) {
-        try{
-        const record = await table.select({filterByFormula: `id = ${_id}`}).all()
-        return record;
-        }
-        catch(error)
-        {
-            console.log(error.message)
-            return;
-        }
-
+/**
+ * Metodo que filtra datos en busqueda de coincidencia
+ * @param {*} _year 
+ * @param {*} _month 
+ * @param {*} _name 
+ * @returns 
+ */
+    async getRecord(_year, _month, _name) {
+        const result =  table.select({filterByFormula: `unique = "${_year}-${_month}-${_name}"`}).all();
+        return result;
     };
 
+    /**
+     * Obtiene parametros de mes y año para el exportado de datos
+     */
     async getRecordParameters() {
         const record = await parametros.select().all()
-        return record[0].fields
+        return record[0].fields;
     };
 }
 

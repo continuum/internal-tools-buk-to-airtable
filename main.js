@@ -1,7 +1,7 @@
 const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
 require('dotenv').config();
 const { parse } = require('dotenv');
-const bulkToBuk = require('./bulktoBUK');
+const bulkToBuk = require('./bulkToBUK');
 const API_BUK_TOKEN = process.env.API_BUK_TOKEN;
 const API_BUK_URL_EMPLOYEES = 'https://continuum.buk.pe/api/v1/peru/employees/active?page_size=100';
 const API_BUK_URL_SALARIES = (date) => `https://continuum.buk.pe/api/v1/peru/payroll_detail/month?date=${date}&page_size=100`;
@@ -40,11 +40,8 @@ async function getSalaries(date) {
 async function getDate() {
     const result = await bulktobuk.getRecordParameters();
     const month = result.month < 10 ? `0${result.month}` : result.month;
-    //return `01-${month}-${result.year}`;
-    return '01-05-2022';
+    return `01-${month}-${result.year}`;
 }
-
-
 
 /**
  * Parse data into Airtable format
@@ -57,14 +54,14 @@ async function parseDataBuk(employees, salaries) {
     let aporte = 0;
     for (let person = 0; person < employees.length; person++) {
         for (let salarie = 0; salarie < salaries.length; salarie++) {
-            aportes = salaries[salarie].lines_settlement.filter(element => element.type==='aporte');
-            aporte = aportes.map(item => item.amount).reduce((prev,curr) => prev + curr, 0);
+            aportes = salaries[salarie].lines_settlement.filter(element => element.type === 'aporte');
+            aporte = aportes.map(item => item.amount).reduce((prev, curr) => prev + curr, 0);
             if (employees[person].person_id === salaries[salarie].person_id && salaries[salarie].income_gross !== 0) {
                 result.push(
                     {
+                        //fields: campos deben tener nombres iguales a los de Airtable y tipos de valores correspondientes
                         "fields": {
                             "DNI": employees[person].rut,
-                            "DNI Salarios": salaries[salarie].rut,
                             "Name": employees[person].full_name,
                             "id": employees[person].id,
                             "remuneration liquid person": salaries[salarie].income_net,
@@ -90,19 +87,17 @@ async function insertToAirtable() {
     dataEmployees = await getEmployees();
     dataSalaries = await getSalaries(date);
     parsedData = await parseDataBuk(dataEmployees.data, dataSalaries.data);
-    
-    for (let x = 0; x < parsedData.length - 1; x++) {
 
-        let idExist = await bulktobuk.getRecord(parsedData[x].fields.id);
-
+    for (let x = 0; x < parsedData.length; x++) {
+        let idExist = await bulktobuk.getRecord(parsedData[x].fields.Year, parsedData[x].fields.Month, parsedData[x].fields.Name);
+        
         if (idExist.length > 0) {
-            console.log('ya existe ID ' + parsedData[x].fields.id);
+            console.log('ya existe ID: ' + parsedData[x].fields.Name);
         }
         else {
             bulktobuk.createRecord(parsedData[x].fields);
-            console.log('insertado el valor ' + parsedData[x].fields.Name);
+            console.log('insertado el valor: ' + parsedData[x].fields.Name);
         }
-
     }
 }
 
