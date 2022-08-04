@@ -12,7 +12,6 @@ let dataEmployees;
 let dataSalaries;
 let date;
 let parsedData;
-let filteredData;
 
 /**
  * @return an object array with people from Buk
