@@ -1,6 +1,6 @@
 const Airtable = require('airtable');
 const base = new Airtable({ apiKey: process.env.API_KEY_AIRTABLE }).base(process.env.API_BASE_SALARY);
-require('dotenv').config();
+//require('dotenv').config();
 
 const table = base('Data BUK PE');
 const parametros = base('Parameters');

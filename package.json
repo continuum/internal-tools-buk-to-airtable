@@ -2,7 +2,7 @@
   "dependencies": {
     "airtable": "^0.11.4",
     "dotenv": "^16.0.1",
-    "node-fetch": "^3.2.7"
+    "node-fetch": "^3.2.10"
   },
   "name": "buk_api",
   "version": "1.0.0",
@@ -13,6 +13,5 @@
   },
   "author": "DiegoGuerrero",
   "license": "ISC",
-  "devDependencies": {},
   "description": ""
 }

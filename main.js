@@ -1,6 +1,6 @@
 const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
-require('dotenv').config();
-const { parse } = require('dotenv');
+//require('dotenv').config();
+//const { parse } = require('dotenv');
 const bulkToBuk = require('./bulkToBUK');
 const API_BUK_TOKEN = process.env.API_BUK_TOKEN;
 const API_BUK_URL_EMPLOYEES = 'https://continuum.buk.pe/api/v1/peru/employees/active?page_size=100';
