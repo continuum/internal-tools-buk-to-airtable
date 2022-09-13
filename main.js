@@ -51,11 +51,13 @@ async function parseDataBuk(employees, salaries) {
     let result = [];
     let aportes = [];
     let aporte = 0;
+    let descuento = 0;
     for (let person = 0; person < employees.length; person++) {
         for (let salarie = 0; salarie < salaries.length; salarie++) {
             aportes = salaries[salarie].lines_settlement.filter(element => element.type === 'aporte');
             aporte = aportes.map(item => item.amount).reduce((prev, curr) => prev + curr, 0);
-            if (employees[person].person_id === salaries[salarie].person_id && salaries[salarie].income_gross !== 0) {
+            if(employees[person].person_id === salaries[salarie].person_id && salaries[salarie].income_gross !== 0) {
+                descuento =  (salaries[salarie].lines_settlement.find(element => element.name === 'Asignación Familiar') != undefined)?salaries[salarie].lines_settlement.find(element => element.name === 'Asignación Familiar').amount:0
                 result.push(
                     {
                         //fields: campos deben tener nombres iguales a los de Airtable y tipos de valores correspondientes
@@ -63,6 +65,7 @@ async function parseDataBuk(employees, salaries) {
                             "DNI": employees[person].rut,
                             "Name": employees[person].full_name,
                             "id": employees[person].id,
+                            "remuneration base": salaries[salarie].lines_settlement.find(element => element.name === 'Base de Vacaciones').amount - descuento,
                             "remuneration liquid person": salaries[salarie].income_net,
                             "remuneration total person": salaries[salarie].income_gross,
                             "company contributions": aporte,
@@ -86,16 +89,16 @@ async function insertToAirtable() {
     dataEmployees = await getEmployees();
     dataSalaries = await getSalaries(date);
     parsedData = await parseDataBuk(dataEmployees.data, dataSalaries.data);
-
+    
     for (let x = 0; x < parsedData.length; x++) {
         let idExist = await bulktobuk.getRecord(parsedData[x].fields.Year, parsedData[x].fields.Month, parsedData[x].fields.Name);
         
         if (idExist.length > 0) {
-            console.log('ya existe ID: ' + parsedData[x].fields.Name);
+            console.log('ya existe ID: ' + parsedData[x].fields.id);
         }
         else {
             bulktobuk.createRecord(parsedData[x].fields);
-            console.log('insertado el valor: ' + parsedData[x].fields.Name);
+            console.log('insertado el valor: ' + parsedData[x].fields.id);
         }
     }
 }
