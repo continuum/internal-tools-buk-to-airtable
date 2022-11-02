@@ -62,7 +62,7 @@ async function parseDataBuk(employees, salaries) {
                     {
                         //fields: campos deben tener nombres iguales a los de Airtable y tipos de valores correspondientes
                         "fields": {
-                            "DNI": employees[person].rut,
+                            "DNI": employees[person].document_number,
                             "Name": employees[person].full_name,
                             "id": employees[person].id,
                             "remuneration base": salaries[salarie].lines_settlement.find(element => element.name === 'Base de Vacaciones').amount - descuento,
@@ -98,7 +98,7 @@ async function insertToAirtable() {
         }
         else {
             bulktobuk.createRecord(parsedData[x].fields);
-            console.log('insertado el valor: ' + parsedData[x].fields.id);
+            console.log('insertado el valor: ' + parsedData[x].fields.DNI);
         }
     }
 }
