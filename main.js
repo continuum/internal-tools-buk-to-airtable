@@ -3,7 +3,7 @@ const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fet
 //const { parse } = require('dotenv');
 const bulkToBuk = require('./bulkToBUK');
 const API_BUK_TOKEN = process.env.API_BUK_TOKEN;
-const API_BUK_URL_EMPLOYEES = 'https://continuum.buk.pe/api/v1/peru/employees/active?page_size=100';
+const API_BUK_URL_EMPLOYEES = 'https://continuum.buk.pe/api/v1/peru/employees?page_size=100';
 const API_BUK_URL_SALARIES = (date) => `https://continuum.buk.pe/api/v1/peru/payroll_detail/month?date=${date}&page_size=100`;
 
 
@@ -40,6 +40,7 @@ async function getDate() {
     const result = await bulktobuk.getRecordParameters();
     const month = result.month < 10 ? `0${result.month}` : result.month;
     return `01-${month}-${result.year}`;
+    //return '01-10-2022';
 }
 
 /**
@@ -94,11 +95,14 @@ async function insertToAirtable() {
         let idExist = await bulktobuk.getRecord(parsedData[x].fields.Year, parsedData[x].fields.Month, parsedData[x].fields.Name);
         
         if (idExist.length > 0) {
-            console.log('ya existe ID: ' + parsedData[x].fields.id);
+            //console.log('ya existe ID: ' + parsedData[x].fields.id);
+            //console.log('insertado el valor: ' + parsedData[x].fields.Name);
         }
         else {
             bulktobuk.createRecord(parsedData[x].fields);
-            console.log('insertado el valor: ' + parsedData[x].fields.DNI);
+            //console.log('insertado el valor: ' + parsedData[x].fields.Name);
+            //console.log('insertado el valor: ' + parsedData[x].fields.id);
+            
         }
     }
 }
