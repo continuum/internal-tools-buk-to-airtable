@@ -5,13 +5,14 @@ const bulkToBuk = require('./bulkToBUK');
 const API_BUK_TOKEN = process.env.API_BUK_TOKEN;
 const API_BUK_URL_EMPLOYEES = 'https://continuum.buk.pe/api/v1/peru/employees?page_size=100';
 const API_BUK_URL_SALARIES = (date) => `https://continuum.buk.pe/api/v1/peru/payroll_detail/month?date=${date}&page_size=100`;
-
+const API_BUK_URL_AREAS =  'https://continuum.buk.pe/api/v1/peru/organization/areas/';
 
 const bulktobuk = new bulkToBuk();
 let dataEmployees;
 let dataSalaries;
 let date;
 let parsedData;
+let areas;
 
 /**
  * @return an object array with people from Buk
@@ -36,11 +37,22 @@ async function getSalaries(date) {
     return dataSalaries = await res.json();
 }
 
+async function getArea(){
+    const res = await fetch(API_BUK_URL_AREAS, {
+        method: 'GET',
+        headers: {
+            'auth_token': API_BUK_TOKEN,
+        },
+    });
+    return areas = await res.json();
+
+}
+
 async function getDate() {
     const result = await bulktobuk.getRecordParameters();
     const month = result.month < 10 ? `0${result.month}` : result.month;
-    return `01-${month}-${result.year}`;
-    //return '01-10-2022';
+    //return `01-${month}-${result.year}`;
+    return '01-02-2023';
 }
 
 /**
@@ -48,15 +60,18 @@ async function getDate() {
  * @param {*} data array of data objects to parse
  * @returns object.array formated to airtable format
  */
-async function parseDataBuk(employees, salaries) {
+async function parseDataBuk(employees, salaries, areas) {
     let result = [];
     let aportes = [];
     let aporte = 0;
     let descuento = 0;
+    let area = {};
     for (let person = 0; person < employees.length; person++) {
         for (let salarie = 0; salarie < salaries.length; salarie++) {
             aportes = salaries[salarie].lines_settlement.filter(element => element.type === 'aporte');
+            //console.log(aportes)
             aporte = aportes.map(item => item.amount).reduce((prev, curr) => prev + curr, 0);
+            area = (areas.find(item => item.cost_center === employees[person].current_job.cost_center) != undefined)? areas.find(item => item.cost_center === employees[person].current_job.cost_center).name : ''
             if(employees[person].person_id === salaries[salarie].person_id && salaries[salarie].income_gross !== 0) {
                 descuento =  (salaries[salarie].lines_settlement.find(element => element.name === 'Asignación Familiar') != undefined)?salaries[salarie].lines_settlement.find(element => element.name === 'Asignación Familiar').amount:0
                 result.push(
@@ -72,10 +87,16 @@ async function parseDataBuk(employees, salaries) {
                             "company contributions": aporte,
                             "total company cost": salaries[salarie].income_gross + aporte,
                             "Month": salaries[salarie].month,
-                            "Year": salaries[salarie].year
+                            "Year": salaries[salarie].year,
+                            "Provision Vacaciones": salaries[salarie].lines_settlement['Provisión Vacaciones'],
+                            "Provision Gratificacion": salaries[salarie].lines_settlement['Provisión Gratificacion'], 
+                            "Provision Bonificacion Extraordinaria Gratificacion": salaries[salarie].lines_settlement['Provisión Bonificación Extraordinaria Gratificacion'],
+                            "Provision CTS": salaries[salarie].lines_settlement['Provisión CTS'] / 2,
+                            "centrocosto": area
                         }
                     }
                 )
+                //console.log(result)
             }
         }
     }
@@ -89,22 +110,25 @@ async function insertToAirtable() {
     date = await getDate();
     dataEmployees = await getEmployees();
     dataSalaries = await getSalaries(date);
-    parsedData = await parseDataBuk(dataEmployees.data, dataSalaries.data);
+    dataAreas = await getArea();
+    parsedData = await parseDataBuk(dataEmployees.data, dataSalaries.data, dataAreas.data);
+
     
     for (let x = 0; x < parsedData.length; x++) {
         let idExist = await bulktobuk.getRecord(parsedData[x].fields.Year, parsedData[x].fields.Month, parsedData[x].fields.Name);
         
         if (idExist.length > 0) {
-            //console.log('ya existe ID: ' + parsedData[x].fields.id);
-            //console.log('insertado el valor: ' + parsedData[x].fields.Name);
+            console.log('ya existe ID: ' + parsedData[x].fields.id);
+            console.log('insertado el valor: ' + parsedData[x].fields.Name);
         }
         else {
             bulktobuk.createRecord(parsedData[x].fields);
-            //console.log('insertado el valor: ' + parsedData[x].fields.Name);
-            //console.log('insertado el valor: ' + parsedData[x].fields.id);
+            console.log('insertado el valor: ' + parsedData[x].fields.Name);
+            console.log('insertado el valor: ' + parsedData[x].fields.id);
             
         }
     }
+    
 }
 
 /**
