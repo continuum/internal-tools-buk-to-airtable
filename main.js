@@ -51,8 +51,8 @@ async function getArea(){
 async function getDate() {
     const result = await bulktobuk.getRecordParameters();
     const month = result.month < 10 ? `0${result.month}` : result.month;
-    //return `01-${month}-${result.year}`;
-    return '01-02-2023';
+    return `01-${month}-${result.year}`;
+    //return '01-02-2023';
 }
 
 /**
