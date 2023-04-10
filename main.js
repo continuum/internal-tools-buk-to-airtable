@@ -92,7 +92,8 @@ async function parseDataBuk(employees, salaries, areas) {
                             "Provision Gratificacion": salaries[salarie].lines_settlement['Provisión Gratificacion'], 
                             "Provision Bonificacion Extraordinaria Gratificacion": salaries[salarie].lines_settlement['Provisión Bonificación Extraordinaria Gratificacion'],
                             "Provision CTS": salaries[salarie].lines_settlement['Provisión CTS'] / 2,
-                            "centrocosto": area
+                            "centrocosto": area,
+                            "fecha ingreso": employees[person].current_job.start_date
                         }
                     }
                 )
@@ -124,8 +125,7 @@ async function insertToAirtable() {
         else {
             bulktobuk.createRecord(parsedData[x].fields);
             console.log('insertado el valor: ' + parsedData[x].fields.Name);
-            console.log('insertado el valor: ' + parsedData[x].fields.id);
-            
+            console.log('insertado el valor: ' + parsedData[x].fields.id); 
         }
     }
     
