@@ -71,7 +71,9 @@ async function parseDataBuk(employees, salaries, areas) {
             aportes = salaries[salarie].lines_settlement.filter(element => element.type === 'aporte');
             //console.log(aportes)
             aporte = aportes.map(item => item.amount).reduce((prev, curr) => prev + curr, 0);
-            area = (areas.find(item => item.cost_center === employees[person].current_job.cost_center) != undefined)? areas.find(item => item.cost_center === employees[person].current_job.cost_center).name : ''
+            
+            //area = (areas.find(item => item.cost_center === employees[person].current_job.cost_center) != undefined)? areas.find(item => item.cost_center === employees[person].current_job.cost_center).name : ''
+            
             if(employees[person].person_id === salaries[salarie].person_id && salaries[salarie].income_gross !== 0) {
                 descuento =  (salaries[salarie].lines_settlement.find(element => element.name === 'Asignación Familiar') != undefined)?salaries[salarie].lines_settlement.find(element => element.name === 'Asignación Familiar').amount:0
                 result.push(
@@ -92,7 +94,7 @@ async function parseDataBuk(employees, salaries, areas) {
                             "Provision Gratificacion": salaries[salarie].lines_settlement['Provisión Gratificacion'], 
                             "Provision Bonificacion Extraordinaria Gratificacion": salaries[salarie].lines_settlement['Provisión Bonificación Extraordinaria Gratificacion'],
                             "Provision CTS": salaries[salarie].lines_settlement['Provisión CTS'] / 2,
-                            "centrocosto": area,
+                            "ceco": employees[person].current_job.cost_center,
                             "fecha ingreso": employees[person].current_job.start_date
                         }
                     }
@@ -112,6 +114,7 @@ async function insertToAirtable() {
     dataEmployees = await getEmployees();
     dataSalaries = await getSalaries(date);
     dataAreas = await getArea();
+
     parsedData = await parseDataBuk(dataEmployees.data, dataSalaries.data, dataAreas.data);
 
     
@@ -120,12 +123,11 @@ async function insertToAirtable() {
         
         if (idExist.length > 0) {
             console.log('ya existe ID: ' + parsedData[x].fields.id);
-            console.log('insertado el valor: ' + parsedData[x].fields.Name);
+            console.log('existe el valor: ' + parsedData[x].fields.Name + " | ceco: " + parsedData[x].fields.centrocosto);
         }
         else {
             bulktobuk.createRecord(parsedData[x].fields);
-            console.log('insertado el valor: ' + parsedData[x].fields.Name);
-            console.log('insertado el valor: ' + parsedData[x].fields.id); 
+            console.log('insertado el valor | ID:' + parsedData[x].fields.id + "Nombre: " + parsedData[x].fields.Name);
         }
     }
     
