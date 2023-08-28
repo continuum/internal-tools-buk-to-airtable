@@ -45,14 +45,13 @@ async function getArea(){
         },
     });
     return areas = await res.json();
-
 }
 
 async function getDate() {
     const result = await bulktobuk.getRecordParameters();
     const month = result.month < 10 ? `0${result.month}` : result.month;
     return `01-${month}-${result.year}`;
-    //return '01-02-2023';
+    //return '01-08-2023';
 }
 
 /**
@@ -62,20 +61,17 @@ async function getDate() {
  */
 async function parseDataBuk(employees, salaries, areas) {
     let result = [];
-    let aportes = [];
-    let aporte = 0;
+//   let aportes = [];
+//    let aporte = 0;
     let descuento = 0;
-    let area = {};
+//    let area = {};
     for (let person = 0; person < employees.length; person++) {
         for (let salarie = 0; salarie < salaries.length; salarie++) {
-            aportes = salaries[salarie].lines_settlement.filter(element => element.type === 'aporte');
-            //console.log(aportes)
-            aporte = aportes.map(item => item.amount).reduce((prev, curr) => prev + curr, 0);
-            
+            //aportes = salaries[salarie].lines_settlement.filter(element => element.type === 'aporte');
+            //aporte = aportes.map(item => item.amount).reduce((prev, curr) => prev + curr, 0);
             //area = (areas.find(item => item.cost_center === employees[person].current_job.cost_center) != undefined)? areas.find(item => item.cost_center === employees[person].current_job.cost_center).name : ''
-            
             if(employees[person].person_id === salaries[salarie].person_id && salaries[salarie].income_gross !== 0) {
-                descuento =  (salaries[salarie].lines_settlement.find(element => element.name === 'Asignación Familiar') != undefined)?salaries[salarie].lines_settlement.find(element => element.name === 'Asignación Familiar').amount:0
+                descuento =  (salaries[salarie].lines_settlement.find(element => element.name === 'Asignación Familiar') != undefined)? salaries[salarie].lines_settlement.find(element => element.name === 'Asignación Familiar').amount:0
                 result.push(
                     {
                         //fields: campos deben tener nombres iguales a los de Airtable y tipos de valores correspondientes
@@ -83,23 +79,34 @@ async function parseDataBuk(employees, salaries, areas) {
                             "DNI": employees[person].document_number,
                             "Name": employees[person].full_name,
                             "id": employees[person].id,
-                            "remuneration base": salaries[salarie].lines_settlement.find(element => element.name === 'Base de Vacaciones').amount - descuento,
+                            "ceco": employees[person].current_job.cost_center,
+                            "Sueldo": salaries[salarie].lines_settlement.find(element => element.name === 'Sueldo')?.amount || 0,
                             "remuneration liquid person": salaries[salarie].income_net,
                             "remuneration total person": salaries[salarie].income_gross,
-                            "company contributions": aporte,
-                            "total company cost": salaries[salarie].income_gross + aporte,
+                            "Asignación Familiar": salaries[salarie].lines_settlement.find(element => element.name === 'Asignación Familiar')?.amount || 0,
+                            "Descanso Médico": salaries[salarie].lines_settlement.find(element => element.name === 'Descanso Médico')?.amount || 0,
+                            "Bonificación Por Teletrabajo": salaries[salarie].lines_settlement.find(element => element.name === 'Bonificación Por Teletrabajo')?.amount || 0,
+                            "Provisión Gratificacion": salaries[salarie].lines_settlement.find(element => element.name === 'Provisión Gratificacion')?.amount || 0,
+                            "Essalud": salaries[salarie].lines_settlement.find(element => element.name === 'Essalud')?.amount || 0,
+                            "Vida Ley": salaries[salarie].lines_settlement.find(element => element.name === 'Vida Ley - D.Leg 688')?.amount || 0,
+                            "Provisión Bonificación Extraordinaria Gratificacion": salaries[salarie].lines_settlement.find(element => element.name === 'Provisión Bonificación Extraordinaria Gratificacion')?.amount || 0,
+                            "Provisión Vacaciones Mensual": salaries[salarie].lines_settlement.find(element => element.name === 'Provisión Vacaciones Mensual')?.amount || 0,
+                            "Provision CTS": salaries[salarie].lines_settlement.find(element => element.name === 'Provisión CTS')?.amount / 2 || 0,
+                            "Eps": salaries[salarie].lines_settlement.find(element => element.name === 'Eps')?.amount || 0,
+                            "Bono Internet": salaries[salarie].lines_settlement.find(element => element.name === 'Bono Internet')?.amount || 0,
+                            "Bonificaciones Regulares": salaries[salarie].lines_settlement.find(element => element.name === 'Bonificaciones Regulares')?.amount || 0,
+                            "Comisión": salaries[salarie].lines_settlement.find(element => element.name === 'Comisión')?.amount || 0,
+                            "Gratificación Extraordinaria": salaries[salarie].lines_settlement.find(element => element.name === 'Gratificación Extraordinaria')?.amount || 0,
+                            "Asignación Por Festividad": salaries[salarie].lines_settlement.find(element => element.name === 'Asignación Por Festividad')?.amount || 0,
+                            "Licencia Paternidad": salaries[salarie].lines_settlement.find(element => element.name === 'Licencia Paternidad')?.amount || 0,
+                            "Subvención de Prácticas": salaries[salarie].lines_settlement.find(element => element.name === 'Subvención de Prácticas')?.amount || 0,
+                            "remuneration base": salaries[salarie].lines_settlement.find(element => element.name === 'Base de Vacaciones')?.amount - descuento,
                             "Month": salaries[salarie].month,
                             "Year": salaries[salarie].year,
-                            "Provision Vacaciones": salaries[salarie].lines_settlement['Provisión Vacaciones'],
-                            "Provision Gratificacion": salaries[salarie].lines_settlement['Provisión Gratificacion'], 
-                            "Provision Bonificacion Extraordinaria Gratificacion": salaries[salarie].lines_settlement['Provisión Bonificación Extraordinaria Gratificacion'],
-                            "Provision CTS": salaries[salarie].lines_settlement['Provisión CTS'] / 2,
-                            "ceco": employees[person].current_job.cost_center,
                             "fecha ingreso": employees[person].current_job.start_date
                         }
                     }
                 )
-                //console.log(result)
             }
         }
     }
@@ -116,11 +123,10 @@ async function insertToAirtable() {
     dataAreas = await getArea();
 
     parsedData = await parseDataBuk(dataEmployees.data, dataSalaries.data, dataAreas.data);
-
     
     for (let x = 0; x < parsedData.length; x++) {
         let idExist = await bulktobuk.getRecord(parsedData[x].fields.Year, parsedData[x].fields.Month, parsedData[x].fields.Name);
-        
+
         if (idExist.length > 0) {
             console.log('ya existe ID: ' + parsedData[x].fields.id);
             console.log('existe el valor: ' + parsedData[x].fields.Name + " | ceco: " + parsedData[x].fields.centrocosto);
